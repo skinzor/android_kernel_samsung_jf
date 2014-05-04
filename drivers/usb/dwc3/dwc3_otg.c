@@ -326,6 +326,105 @@ int dwc3_set_ext_xceiv(struct usb_otg *otg, struct dwc3_ext_xceiv *ext_xceiv)
 	return 0;
 }
 
+static void dwc3_otg_notify_host_mode(struct usb_otg *otg, int host_mode)
+{
+	struct dwc3_otg *dotg = container_of(otg, struct dwc3_otg, otg);
+
+	if (!dotg->psy) {
+		dev_err(otg->phy->dev, "no usb power supply registered\n");
+		return;
+	}
+
+	if (host_mode)
+		power_supply_set_scope(dotg->psy, POWER_SUPPLY_SCOPE_SYSTEM);
+	else
+		power_supply_set_scope(dotg->psy, POWER_SUPPLY_SCOPE_DEVICE);
+}
+
+static int dwc3_otg_set_power(struct usb_phy *phy, unsigned mA)
+{
+	static int power_supply_type;
+	struct dwc3_otg *dotg = container_of(phy->otg, struct dwc3_otg, otg);
+	struct power_supply *saved_usb_psy = NULL;
+	struct power_supply *ac_psy = NULL;
+
+	if (!dotg->psy || !dotg->charger) {
+		dev_err(phy->dev, "no usb power supply/charger registered\n");
+		return 0;
+	}
+
+	if (dotg->charger->charging_disabled)
+		return 0;
+
+	if (dotg->charger->chg_type == DWC3_SDP_CHARGER)
+		power_supply_type = POWER_SUPPLY_TYPE_USB;
+	else if (dotg->charger->chg_type == DWC3_CDP_CHARGER)
+		power_supply_type = POWER_SUPPLY_TYPE_USB_CDP;
+	else if (dotg->charger->chg_type == DWC3_DCP_CHARGER ||
+			dotg->charger->chg_type == DWC3_PROPRIETARY_CHARGER)
+		power_supply_type = POWER_SUPPLY_TYPE_USB_DCP;
+	else
+		power_supply_type = POWER_SUPPLY_TYPE_BATTERY;
+
+	power_supply_set_supply_type(dotg->psy, power_supply_type);
+
+	if ((dotg->charger->chg_type == DWC3_CDP_CHARGER) && mA > 0)
+		mA = DWC3_IDEV_CHG_MAX;
+
+	if (slimport_is_connected() && mA) {
+		mA = slimport_get_chg_current();
+		if (mA > DWC3_IDEV_CHG_MIN)
+			dotg->charger->chg_type = DWC3_DCP_CHARGER;
+	}
+
+	if (dotg->charger->max_power == mA)
+		return 0;
+
+	dev_info(phy->dev, "Avail curr from USB = %u\n", mA);
+
+	ac_psy = power_supply_get_by_name("ac");
+
+	if ((dotg->charger->chg_type == DWC3_DCP_CHARGER || dotg->charger->chg_type == DWC3_PROPRIETARY_CHARGER) && ac_psy) {
+		pr_info("%s: override dotg->psy to ac->psy\n", __func__);
+		saved_usb_psy = dotg->psy;
+		dotg->psy = ac_psy;
+	}
+	pr_info("dotg->charger->max_power = %d "\
+			"ma = %d\n", dotg->charger->max_power, mA);
+
+	if (dotg->charger->max_power <= 2 && mA > 2) {
+		/* Enable charging */
+		if (power_supply_set_online(dotg->psy, true))
+			goto psy_error;
+		if (!strcmp(dotg->psy->name, "usb")) {
+			if (power_supply_set_current_limit(dotg->psy, 1000*mA))
+				goto psy_error;
+		}
+	} else if (dotg->charger->max_power > 0 && (mA == 0 || mA == 2)) {
+		/* Disable charging */
+		if (power_supply_set_online(dotg->psy, false))
+			goto psy_error;
+		if (!strcmp(dotg->psy->name, "usb")) {
+			if (power_supply_set_online(ac_psy, false))
+				goto psy_error;
+			/* Set max current limit */
+			if (power_supply_set_current_limit(dotg->psy, 0))
+				goto psy_error;
+		}
+	}
+
+	if (saved_usb_psy)
+		dotg->psy = saved_usb_psy;
+
+	power_supply_changed(dotg->psy);
+	dotg->charger->max_power = mA;
+	return 0;
+
+psy_error:
+	dev_dbg(phy->dev, "power supply error when setting property\n");
+	return -ENXIO;
+}
+
 /* IRQs which OTG driver is interested in handling */
 #define DWC3_OEVT_MASK		(DWC3_OEVTEN_OTGCONIDSTSCHNGEVNT | \
 				 DWC3_OEVTEN_OTGBDEVVBUSCHNGEVNT)

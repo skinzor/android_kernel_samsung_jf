@@ -39,6 +39,32 @@
 #include "core.h"
 #include "gadget.h"
 
+/* ADC threshold values */
+static int adc_low_threshold = 700;
+module_param(adc_low_threshold, int, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(adc_low_threshold, "ADC ID Low voltage threshold");
+
+static int adc_high_threshold = 950;
+module_param(adc_high_threshold, int, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(adc_high_threshold, "ADC ID High voltage threshold");
+
+static int adc_meas_interval = ADC_MEAS1_INTERVAL_1S;
+module_param(adc_meas_interval, int, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(adc_meas_interval, "ADC ID polling period");
+
+static int override_phy_init;
+module_param(override_phy_init, int, S_IRUGO|S_IWUSR);
+MODULE_PARM_DESC(override_phy_init, "Override HSPHY Init Seq");
+
+static int override_phy_host_init;
+module_param(override_phy_host_init, int, S_IRUGO|S_IWUSR);
+MODULE_PARM_DESC(override_phy_host_init, "Override HSPHY HOST Init Seq");
+
+/* Enable Proprietary charger detection */
+static bool prop_chg_detect = true;
+module_param(prop_chg_detect, bool, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(prop_chg_detect, "Enable Proprietary charger detection");
+
 /**
  *  USB DBM Hardware registers.
  *
