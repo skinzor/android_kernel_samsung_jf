@@ -170,6 +170,7 @@ struct qup_i2c_dev {
 	int                          wr_sz;
 	struct msm_i2c_platform_data *pdata;
 	enum msm_i2c_state           pwr_state;
+	atomic_t		     xfer_progress;
 	struct mutex                 mlock;
 	void                         *complete;
 	int                          i2c_gpios[ARRAY_SIZE(i2c_rsrcs)];
@@ -206,11 +207,14 @@ qup_i2c_interrupt(int irq, void *devid)
 	uint32_t op_flgs = readl_relaxed(dev->base + QUP_OPERATIONAL);
 	int err = 0;
 
-#ifdef SECURE_INPUT
-	if (is_secure_world && dev->adapter.nr == 3) {
-		return 0;
+	if (atomic_read(&dev->xfer_progress) != 1) {
+		dev_err(dev->dev, "irq:%d when PM suspended\n", irq);
+		return IRQ_NONE;
 	}
-#endif
+
+	status = readl_relaxed(dev->base + QUP_I2C_STATUS);
+	status1 = readl_relaxed(dev->base + QUP_ERROR_FLAGS);
+	op_flgs = readl_relaxed(dev->base + QUP_OPERATIONAL);
 
 	if (!dev->msg || !dev->complete) {
 		/* Clear Error interrupt if it's a level triggered interrupt*/
@@ -939,9 +943,7 @@ qup_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msgs[], int num)
 	if (dev->pdata->clk_ctl_xfer)
 		i2c_qup_pm_resume_clk(dev);
 
-	if (dev->clk_state == 0)
-		qup_i2c_pwr_mgmt(dev, 1);
-
+	atomic_set(&dev->xfer_progress, 1);
 	/* Initialize QUP registers during first transfer */
 	if (dev->clk_ctl == 0) {
 		int fs_div;
@@ -1245,6 +1247,7 @@ timeout_err:
 	dev->cnt = 0;
 	if (dev->pdata->clk_ctl_xfer)
 		i2c_qup_pm_suspend_clk(dev);
+	atomic_set(&dev->xfer_progress, 0);
 	mutex_unlock(&dev->mlock);
 	return ret;
 }
@@ -1586,6 +1589,7 @@ blsp_core_init:
 	dev->suspended = 0;
 	mutex_init(&dev->mlock);
 	dev->pwr_state = MSM_I2C_PM_SUSPENDED;
+	atomic_set(&dev->xfer_progress, 0);
 	/* If the same AHB clock is used on Modem side
 	 * switch it on here itself and don't switch it
 	 * on and off during suspend and resume.
