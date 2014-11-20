@@ -125,6 +125,13 @@ config CPU_FREQ_DEFAULT_GOV_INTELLIDEMAND
 	  Use the CPUFreq governor 'intellidemand' as default. This is
 	  based on Ondemand with browsing detection based on GPU loading
 
+config CPU_FREQ_DEFAULT_GOV_INTELLIMM
+        bool "intelliminmax"
+        select CPU_FREQ_GOV_INTELLIMM
+        help
+          Use the CPUFreq governor 'intelliminmax' as default. This is
+          governor will use only 3 different frequencies, idle, UI and max
+
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -286,6 +293,16 @@ config CPUFREQ_LIMIT_MAX_FREQ
 	depends on CPU_FREQ_GOV_INTELLIDEMAND
 	help
 		Limit Max Freq while screen is on for Intellidemand governor
+
+config CPU_FREQ_GOV_INTELLIMM
+        tristate "'intelliminmax' cpufreq policy governor"
+        help
+          To compile this driver as a module, choose M here: the
+          module will be called cpufreq_interactive.
+
+          For details, take a look at linux/Documentation/cpu-freq.
+
+          If in doubt, say N.
 
 config CPUFREQ_ID_PERFLOCK
 	bool "Intellidemand Performance Lock"
