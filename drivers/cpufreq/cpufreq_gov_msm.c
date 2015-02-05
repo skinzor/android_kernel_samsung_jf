@@ -136,10 +136,10 @@ static void msm_gov_check_limits(struct cpufreq_policy *policy)
 				CPUFREQ_RELATION_H);
 	else if (policy->min > gov->cur_freq)
 		__cpufreq_driver_target(policy, policy->min,
-				CPUFREQ_RELATION_L);
+				CPUFREQ_RELATION_C);
 	else
 		__cpufreq_driver_target(policy, gov->cur_freq,
-				CPUFREQ_RELATION_L);
+				CPUFREQ_RELATION_C);
 
 	gov->cur_freq = policy->cur;
 	gov->min_freq = policy->min;
@@ -162,7 +162,7 @@ static int msm_dcvs_freq_set(int core_num,
 
 	mutex_unlock(&per_cpu(gov_mutex, gov->cpu));
 
-	ret = cpufreq_driver_target(gov->policy, freq, CPUFREQ_RELATION_L);
+	ret = cpufreq_driver_target(gov->policy, freq, CPUFREQ_RELATION_C);
 
 	if (!ret) {
 		gov->cur_freq = cpufreq_quick_get(gov->cpu);
