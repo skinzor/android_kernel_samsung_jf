@@ -955,7 +955,13 @@ static ssize_t oom_adjust_write(struct file *file, const char __user *buf,
 	printk_once(KERN_WARNING "%s (%d): /proc/%d/oom_adj is deprecated, please use /proc/%d/oom_score_adj instead.\n",
 		  current->comm, task_pid_nr(current), task_pid_nr(task),
 		  task_pid_nr(task));
+#ifdef CONFIG_ANDROID_LMK_ADJ_RBTREE
+	delete_from_adj_tree(task);
+#endif
 	task->signal->oom_adj = oom_adjust;
+#ifdef CONFIG_ANDROID_LMK_ADJ_RBTREE
+	add_2_adj_tree(task);
+#endif
 	/*
 	 * Scale /proc/pid/oom_score_adj appropriately ensuring that a maximum
 	 * value is always attainable.
@@ -1079,7 +1085,13 @@ static ssize_t oom_score_adj_write(struct file *file, const char __user *buf,
 		goto err_sighand;
 	}
 
+#ifdef CONFIG_ANDROID_LMK_ADJ_RBTREE
+	delete_from_adj_tree(task);
+#endif
 	task->signal->oom_score_adj = oom_score_adj;
+#ifdef CONFIG_ANDROID_LMK_ADJ_RBTREE
+        add_2_adj_tree(task);
+#endif
 	if (has_capability_noaudit(current, CAP_SYS_RESOURCE))
 		task->signal->oom_score_adj_min = oom_score_adj;
 	trace_oom_score_adj_update(task);

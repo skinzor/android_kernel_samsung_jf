@@ -87,6 +87,14 @@ config SEC_OOM_KILLER
 	  Hence, it makes more sense that we select the oom victim
 	  as android does when LMK is invoked.
 
+config ANDROID_LMK_ADJ_RBTREE
+	bool "Use RBTREE for Android Low Memory Killer"
+	depends on ANDROID_LOW_MEMORY_KILLER
+	default N
+	---help---
+	    Use oom_score_adj rbtree to select the best proecss to kill
+	    when system in low memory status.
+
 source "drivers/staging/android/switch/Kconfig"
 
 config ANDROID_INTF_ALARM_DEV
