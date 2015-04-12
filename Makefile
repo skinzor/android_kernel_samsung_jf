@@ -243,6 +243,37 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 	  else if [ -x /bin/bash ]; then echo /bin/bash; \
 	  else echo sh; fi ; fi)
 
+GRAPHITE_FLAGS := \
+	-fgraphite \
+	-fgraphite-identity \
+	-floop-flatten \
+	-floop-parallelize-all \
+	-ftree-loop-linear \
+	-floop-interchange \
+	-floop-strip-mine \
+	-floop-block \
+	-floop-nest-optimize \
+	-floop-unroll-and-jam
+
+EXTRA_GCC_FLAGS := \
+	-ftree-loop-distribution \
+	-ftree-loop-if-convert \
+	-ftree-loop-im \
+	-ftree-loop-ivcanon \
+	-ftree-parallelize-loops=4 \
+	-fvect-cost-model=dynamic \
+	-fprefetch-loop-arrays \
+	-ftree-vectorize \
+	-mvectorize-with-neon-quad
+
+KERNEL_FLAGS := \
+	-marm \
+	-DNDEBUG \
+	-std=gnu89 \
+	-mtune=cortex-a15 \
+	-mcpu=cortex-a15 \
+	-mfpu=neon-vfpv4
+
 HOSTCC       = gcc
 HOSTCXX      = g++
 HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
@@ -350,11 +381,17 @@ CHECK		= sparse
 CC		= $(srctree)/scripts/gcc-wrapper.py $(REAL_CC)
 # CC		= $(REAL_CC)
 
+CC		+= -O3 -pthread -fstack-protector \
+		$(kernel_arch_variant_cflags) \
+		$(GRAPHITE_FLAGS) \
+		$(EXTRA_GCC_FLAGS) \
+		$(KERNEL_FLAGS)
+
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
 CFLAGS_MODULE   =
 AFLAGS_MODULE   =
-LDFLAGS_MODULE  =
+LDFLAGS_MODULE  = -T $(srctree)/scripts/module-common.lds
 CFLAGS_KERNEL	=
 AFLAGS_KERNEL	=
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
