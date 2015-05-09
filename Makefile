@@ -253,7 +253,9 @@ GRAPHITE_FLAGS := \
 	-floop-strip-mine \
 	-floop-block \
 	-floop-nest-optimize \
-	-floop-unroll-and-jam
+	-floop-unroll-and-jam \
+	-ftree-parallelize-loops=4 \
+    	-fopenmp
 
 EXTRA_GCC_FLAGS := \
 	-ftree-loop-distribution \
