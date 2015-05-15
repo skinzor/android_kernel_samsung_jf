@@ -274,7 +274,10 @@ KERNEL_FLAGS := \
 	-std=gnu89 \
 	-mtune=cortex-a15 \
 	-mcpu=cortex-a15 \
-	-mfpu=neon-vfpv4
+	-mfpu=neon-vfpv4 \
+	--param l1-cache-line-size=32 \
+	--param l1-cache-size=32 \
+	--param l2-cache-size=2048
 
 HOSTCC       = gcc
 HOSTCXX      = g++
@@ -606,7 +609,7 @@ all: vmlinux
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os $(call cc-disable-warning,maybe-uninitialized,)
 else
-KBUILD_CFLAGS	+= -O2
+KBUILD_CFLAGS	+= -O2 $(KERNEL_FLAGS)
 endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
