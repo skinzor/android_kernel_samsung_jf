@@ -386,7 +386,7 @@ CHECK		= sparse
 CC		= $(srctree)/scripts/gcc-wrapper.py $(REAL_CC)
 # CC		= $(REAL_CC)
 
-CC		+= -O3 -pthread -fstack-protector \
+CC		+= -O3 -fstack-protector \
 		$(kernel_arch_variant_cflags) \
 		$(GRAPHITE_FLAGS) \
 		$(EXTRA_GCC_FLAGS) \
