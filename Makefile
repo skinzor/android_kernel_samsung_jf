@@ -243,7 +243,7 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 	  else if [ -x /bin/bash ]; then echo /bin/bash; \
 	  else echo sh; fi ; fi)
 
-GRAPHITE_FLAGS := \
+GRAPHITE := \
 	-fgraphite \
 	-fgraphite-identity \
 	-floop-flatten \
@@ -388,7 +388,7 @@ CC		= $(srctree)/scripts/gcc-wrapper.py $(REAL_CC)
 
 CC		+= -O3 -fstack-protector \
 		$(kernel_arch_variant_cflags) \
-		$(GRAPHITE_FLAGS) \
+		$(GRAPHITE) \
 		$(EXTRA_GCC_FLAGS) \
 		$(KERNEL_FLAGS)
 
