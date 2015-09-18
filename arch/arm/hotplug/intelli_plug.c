@@ -158,6 +158,16 @@ static unsigned int nr_run_last;
 extern unsigned long avg_nr_running(void);
 extern unsigned long avg_cpu_nr_running(unsigned int cpu);
 
+static void __ref cpu_all_up(void) {
+	unsigned int cpu;
+
+	for_each_cpu_not(cpu, cpu_online_mask) {
+		if (cpu == 0)
+			continue;
+		cpu_up(cpu);
+	}
+}
+
 static unsigned int calculate_thread_stats(void)
 {
 	unsigned int avg_nr_run = avg_nr_running();
@@ -454,6 +464,15 @@ static void wakeup_boost(void)
 	}
 }
 
+static void cpu_all_up_boost(struct work_struct *work);
+static DECLARE_WORK(cpu_all_up_boost_work, cpu_all_up_boost);
+
+static void cpu_all_up_boost(struct work_struct *work)
+{
+	cpu_all_up();
+	wakeup_boost();
+}
+
 #ifdef CONFIG_POWERSUSPEND
 static void __ref intelli_plug_resume(struct power_suspend *handler)
 #else
@@ -462,21 +481,13 @@ static void __ref intelli_plug_resume(struct early_suspend *handler)
 {
 
 	if (intelli_plug_active) {
-		int cpu;
-
 		mutex_lock(&intelli_plug_mutex);
 		/* keep cores awake long enough for faster wake up */
 		persist_count = BUSY_PERSISTENCE;
 		suspended = false;
 		mutex_unlock(&intelli_plug_mutex);
 
-		for_each_possible_cpu(cpu) {
-			if (cpu == 0)
-				continue;
-			cpu_up(cpu);
-		}
-
-		wakeup_boost();
+		schedule_work(&cpu_all_up_boost_work);
 		screen_off_limit(false);
 	}
 	queue_delayed_work_on(0, intelliplug_wq, &intelli_plug_work,
