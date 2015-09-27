@@ -456,6 +456,10 @@ ifdef SABERMOD_KERNEL_FLAGS
 endif
 # end The SaberMod Project additions
 
+CACHE_FLAGS := --param l1-cache-line-size=16 --param l1-cache-size=16 --param l2-cache-size=2048
+
+CC += $(CACHE_FLAGS)
+
 # Use LINUXINCLUDE when you must reference the include/ directory.
 # Needed to be compatible with the O= option
 LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
@@ -468,7 +472,7 @@ KBUILD_CPPFLAGS := -D__KERNEL__
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-common -Werror-implicit-function-declaration \
 		   -Wno-format-security -fno-delete-null-pointer-checks \
-		   -fno-strict-aliasing
+		   -fno-strict-aliasing $(CACHE_FLAGS)
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
