@@ -394,23 +394,6 @@ else
   endif
 endif
 
-# Extra flags
-ifdef SABERMOD_KERNEL_FLAGS
-  ifdef EXTRA_SABERMOD_GCC_VECTORIZE
-    SABERMOD_KERNEL_FLAGS += $(EXTRA_SABERMOD_GCC_VECTORIZE)
-  endif
-  ifdef EXTRA_SABERMOD_GCC
-    SABERMOD_KERNEL_FLAGS += $(EXTRA_SABERMOD_GCC)
-  endif
-else
-  ifdef EXTRA_SABERMOD_GCC_VECTORIZE
-    SABERMOD_KERNEL_FLAGS := $(EXTRA_SABERMOD_GCC_VECTORIZE)
-  endif
-  ifdef EXTRA_SABERMOD_GCC
-    SABERMOD_KERNEL_FLAGS := $(EXTRA_SABERMOD_GCC)
-  endif
-endif
-
 ifdef SABERMOD_KERNEL_FLAGS
   ifdef kernel_arch_variant_cflags
     SABERMOD_KERNEL_FLAGS += $(kernel_arch_variant_cflags)
@@ -472,7 +455,8 @@ KBUILD_CPPFLAGS := -D__KERNEL__
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-common -Werror-implicit-function-declaration \
 		   -Wno-format-security -fno-delete-null-pointer-checks \
-		   -fno-strict-aliasing $(CACHE_FLAGS)
+		   -fno-strict-aliasing -marm \
+                   $(CACHE_FLAGS) $(GRAPHITE_KERNEL_FLAGS)
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
