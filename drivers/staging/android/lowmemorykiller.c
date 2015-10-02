@@ -545,6 +545,7 @@ static int android_oom_handler(struct notifier_block *nb,
 		if (avoid_to_kill(uid) || protected_apps(p->comm)) {
 #else
 		if (avoid_to_kill(uid)) {
+#endif
 			if (tasksize * (long)(PAGE_SIZE / 1024) >= 80000) {
 				selected = p;
 				selected_tasksize = tasksize;
