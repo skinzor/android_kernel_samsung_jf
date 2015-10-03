@@ -441,3 +441,17 @@ endif
 obj-$(CONFIG_BT_BCM4335) += board-bluetooth-bcm4335.o
 
 obj-$(CONFIG_CPU_FREQ_MSM) += cpufreq.o
+
+CFLAGS_iommu_domains.o := \
+       -fno-graphite \
+       -fno-graphite-identity \
+       -fno-loop-flatten \
+       -fno-tree-loop-linear \
+       -fno-loop-interchange \
+       -fno-loop-strip-mine \
+       -fno-loop-block \
+       -fno-loop-nest-optimize \
+       -fno-loop-unroll-and-jam \
+       -fno-loop-parallelize-all \
+       -ftree-parallelize-loops=0 \
+       -fno-openmp
