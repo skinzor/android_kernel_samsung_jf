@@ -451,7 +451,6 @@ CFLAGS_iommu_domains.o := \
        -fno-loop-strip-mine \
        -fno-loop-block \
        -fno-loop-nest-optimize \
-       -fno-loop-unroll-and-jam \
        -fno-loop-parallelize-all \
        -ftree-parallelize-loops=0 \
        -fno-openmp
