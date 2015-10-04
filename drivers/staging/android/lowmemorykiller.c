@@ -46,10 +46,8 @@
 
 #include <linux/ratelimit.h>
 
-#ifdef CONFIG_RUNTIME_COMPCACHE
 #include <linux/fs.h>
 #include <linux/swap.h>
-#endif /* CONFIG_RUNTIME_COMPCACHE */
 #define ENHANCED_LMK_ROUTINE
 #define LMK_COUNT_READ
 
@@ -365,7 +363,7 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 			     sc->nr_to_scan, sc->gfp_mask, rem);
 
 		if ((min_score_adj == OOM_SCORE_ADJ_MAX + 1) &&
-			(nr_to_scan > 0))
+			(sc->nr_to_scan > 0))
 			trace_almk_shrink(0, ret, other_free, other_file, 0);
 
 		return rem;
@@ -483,7 +481,12 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 #ifdef LMK_COUNT_READ
 			lmk_count++;
 #endif
-		}
+			trace_almk_shrink(selected_tasksize[i], ret,
+                        other_free, other_file, selected_oom_score_adj);
+        	} else {
+                	trace_almk_shrink(1, ret, other_free, other_file, 0);
+                	rcu_read_unlock();
+        	}
 	}
 #else
 	if (selected) {
@@ -510,14 +513,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 #endif
 	}
 #endif
-		/* give the system time to free up the memory */
-		msleep_interruptible(20);
-		trace_almk_shrink(selected_tasksize, ret,
-			other_free, other_file, selected_oom_score_adj);
-	} else {
-		trace_almk_shrink(1, ret, other_free, other_file, 0);
-		rcu_read_unlock();
-	}
 
 	lowmem_print(4, "lowmem_shrink %lu, %x, return %d\n",
 		     sc->nr_to_scan, sc->gfp_mask, rem);
