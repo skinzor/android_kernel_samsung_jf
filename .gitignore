@@ -84,3 +84,7 @@ GTAGS
 *.orig
 *~
 \#*#
+
+# Ignore completed kernels
+boot.img
+*.zip
