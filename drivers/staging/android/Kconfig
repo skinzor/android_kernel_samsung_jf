@@ -84,6 +84,8 @@ config ANDROID_LMK_ADJ_RBTREE
 	    Use oom_score_adj rbtree to select the best proecss to kill
 	    when system in low memory status.
 
+source "drivers/staging/android/switch/Kconfig"
+
 config ANDROID_INTF_ALARM_DEV
 	bool "Android alarm driver"
 	depends on RTC_CLASS
