@@ -159,9 +159,9 @@ extern unsigned long avg_nr_running(void);
 extern unsigned long avg_cpu_nr_running(unsigned int cpu);
 
 static void __ref cpu_all_up(void) {
-	int cpu;
+	unsigned int cpu;
 
-	for_each_possible_cpu(cpu) {
+	for_each_cpu_not(cpu, cpu_online_mask) {
 		if (cpu == 0)
 			continue;
 		cpu_up(cpu);
