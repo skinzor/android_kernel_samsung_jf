@@ -359,6 +359,27 @@ CFLAGS_KERNEL	=
 AFLAGS_KERNEL	=
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
+# Optimization flags
+OPTI_FLAGS := \
+	-O3 \
+	-marm \
+	-fgraphite \
+	-fgraphite-identity \
+	-floop-flatten \
+	-floop-parallelize-all \
+	-ftree-loop-linear \
+	-floop-interchange \
+	-floop-strip-mine \
+	-floop-block
+
+# Cache flags
+CACHE_FLAGS := \
+	--param l1-cache-line-size=16 \
+	--param l1-cache-size=16 \
+	--param l2-cache-size=2048
+
+# Append optimization flags to CC
+CC	+= $(OPTI_FLAGS) $(CACHE_FLAGS)
 
 # Use LINUXINCLUDE when you must reference the include/ directory.
 # Needed to be compatible with the O= option
@@ -373,7 +394,8 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks
+		   -fno-delete-null-pointer-checks \
+		   $(OPTI_FLAGS) $(CACHE_FLAGS)
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
