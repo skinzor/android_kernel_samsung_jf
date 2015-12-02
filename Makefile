@@ -361,16 +361,9 @@ CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
 # Optimization flags
 OPTI_FLAGS := \
-	-O3 \
-	-marm \
-	-fgraphite \
-	-fgraphite-identity \
-	-floop-flatten \
-	-floop-parallelize-all \
-	-ftree-loop-linear \
-	-floop-interchange \
-	-floop-strip-mine \
-	-floop-block
+	-pipe -fno-pic -O2 -mcpu=cortex-a15 -mtune=cortex-a15 -mfloat-abi=softfp -mfpu=vfpv4 \
+	-fgraphite -fgraphite-identity 	-floop-flatten 	-floop-parallelize-all 	\
+	-ftree-loop-linear -floop-interchange -floop-strip-mine -floop-block
 
 # Cache flags
 CACHE_FLAGS := \
