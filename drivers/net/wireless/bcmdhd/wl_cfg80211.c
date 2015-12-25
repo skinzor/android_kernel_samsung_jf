@@ -9848,16 +9848,19 @@ static s32 wl_notify_escan_complete(struct bcm_cfg80211 *cfg,
 	struct net_device *dev;
 
 	WL_DBG(("Enter \n"));
+
+	mutex_lock(&wl->scan_complete);
+
 	if (!ndev) {
 		WL_ERR(("ndev is null\n"));
 		err = BCME_ERROR;
-		return err;
+		goto out;
 	}
 
 	if (cfg->escan_info.ndev != ndev) {
 		WL_ERR(("ndev is different %p %p\n", cfg->escan_info.ndev, ndev));
 		err = BCME_ERROR;
-		return err;
+		goto out;
 	}
 
 	if (cfg->scan_request) {
@@ -9902,6 +9905,8 @@ static s32 wl_notify_escan_complete(struct bcm_cfg80211 *cfg,
 	wl_clr_drv_status(cfg, SCANNING, dev);
 	spin_unlock_irqrestore(&cfg->cfgdrv_lock, flags);
 
+out:
+	mutex_unlock(&wl->scan_complete);
 	return err;
 }
 
@@ -10477,6 +10482,7 @@ static s32 wl_init_priv(struct bcm_cfg80211 *cfg)
 	wl_init_event_handler(cfg);
 	mutex_init(&cfg->usr_sync);
 	mutex_init(&cfg->event_sync);
+	mutex_init(&cfg->scan_complete);
 	err = wl_init_scan(cfg);
 	if (err)
 		return err;
@@ -11525,8 +11531,10 @@ s32 wl_cfg80211_up(void *para)
 	dhd = (dhd_pub_t *)(cfg->pub);
 	if (!(dhd->op_mode & DHD_FLAG_HOSTAP_MODE)) {
 		err = wl_cfg80211_attach_post(bcmcfg_to_prmry_ndev(cfg));
-		if (unlikely(err))
+		if (unlikely(err)) {
+			mutex_unlock(&cfg->usr_sync);
 			return err;
+		}
 	}
 #if defined(BCMSUP_4WAY_HANDSHAKE) && defined(WLAN_AKM_SUITE_FT_8021X)
 	if (dhd->fw_4way_handshake)
