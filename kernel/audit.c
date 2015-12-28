@@ -391,10 +391,9 @@ static void audit_printk_skb(struct sk_buff *skb)
 #endif
 
 	if (nlh->nlmsg_type != AUDIT_EOE) {
-		if (printk_ratelimit())
-			pr_debug(KERN_NOTICE "type=%d %s\n", nlh->nlmsg_type, data);
-		else
-			audit_log_lost("printk limit exceeded\n");
+#ifdef CONFIG_PROC_AVC
+		sec_avc_log("%s\n", data);
+#endif
 	}
 
 	audit_hold_skb(skb);
