@@ -170,8 +170,38 @@ struct qup_i2c_dev {
 	int                          i2c_gpios[ARRAY_SIZE(i2c_rsrcs)];
 };
 
-#ifdef CONFIG_PM
-static int i2c_qup_pm_resume_runtime(struct device *device);
+#ifdef SECURE_INPUT
+static void qup_i2c_pwr_mgmt(struct qup_i2c_dev *dev, unsigned int state);
+static int is_secure_world = 0;
+extern int mxt_power_reset(void);
+static ssize_t qup_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	pr_info("%s[qup] %d\n", __func__, is_secure_world);
+	return sprintf(buf, "%d\n", is_secure_world);
+}
+
+static ssize_t qup_store(struct device *dev,
+					  struct device_attribute *attr,
+					  const char *buf, size_t count)
+{
+    struct qup_i2c_dev *pdev = dev_get_drvdata(dev);
+	if (!strncmp(buf, "0", 1)) {
+		is_secure_world = 0;
+	}
+	else if (!strncmp(buf, "1", 1)) {
+		if (pdev->clk_state == 0)
+			qup_i2c_pwr_mgmt(pdev, 1);
+		pr_info("%s: %d-%d(%d)", __func__, is_secure_world, pdev->adapter.nr, pdev->clk_state);
+		is_secure_world = 1;
+	}
+	else {
+		pr_warn("%s: Wrong command\n", __func__);
+	}
+	return count;
+}
+
+static DEVICE_ATTR(qup_block, S_IRUGO | S_IWUSR , qup_show, qup_store);
 #endif
 
 #ifdef DEBUG
@@ -772,13 +802,13 @@ qup_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msgs[], int num)
 	long timeout;
 	int err;
 
-	/* Alternate if runtime power management is disabled */
-	if (!pm_runtime_enabled(dev->dev)) {
-		dev_dbg(dev->dev, "Runtime PM is disabled\n");
-		i2c_qup_pm_resume_runtime(dev->dev);
-	} else {
-		pm_runtime_get_sync(dev->dev);
+#ifdef SECURE_INPUT
+	if (is_secure_world && dev->adapter.nr == 3) {
+		return 0;
 	}
+#endif
+
+	del_timer_sync(&dev->pwr_timer);
 	mutex_lock(&dev->mlock);
 
 	if (dev->suspended) {
@@ -1507,27 +1537,13 @@ static int qup_i2c_resume(struct device *device)
 #ifdef CONFIG_PM_RUNTIME
 static int i2c_qup_runtime_idle(struct device *dev)
 {
-	if (!pm_runtime_enabled(device) || !pm_runtime_suspended(device)) {
-		dev_dbg(device, "system suspend");
-		i2c_qup_pm_suspend_runtime(device);
-		/*
-		 * set the device's runtime PM status to 'suspended'
-		 */
-		pm_runtime_disable(device);
-		pm_runtime_set_suspended(device);
-		pm_runtime_enable(device);
-	}
+	dev_dbg(dev, "pm_runtime: idle...\n");
 	return 0;
 }
 
 static int i2c_qup_runtime_suspend(struct device *dev)
 {
-	/*
-	 * Rely on runtime-PM to call resume in case it is enabled
-	 * Even if it's not enabled, rely on 1st client transaction to do
-	 * clock ON and gpio configuration
-	 */
-	dev_dbg(device, "system resume");
+	dev_dbg(dev, "pm_runtime: suspending...\n");
 	return 0;
 }
 
