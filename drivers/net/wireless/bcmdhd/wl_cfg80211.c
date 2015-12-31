@@ -9849,7 +9849,7 @@ static s32 wl_notify_escan_complete(struct bcm_cfg80211 *cfg,
 
 	WL_DBG(("Enter \n"));
 
-	mutex_lock(&wl->scan_complete);
+	mutex_lock(&cfg->scan_complete);
 
 	if (!ndev) {
 		WL_ERR(("ndev is null\n"));
@@ -9906,7 +9906,7 @@ static s32 wl_notify_escan_complete(struct bcm_cfg80211 *cfg,
 	spin_unlock_irqrestore(&cfg->cfgdrv_lock, flags);
 
 out:
-	mutex_unlock(&wl->scan_complete);
+	mutex_unlock(&cfg->scan_complete);
 	return err;
 }
 
