@@ -48,7 +48,6 @@ static DEFINE_MUTEX(intelli_plug_mutex);
 
 static struct delayed_work intelli_plug_work;
 
-static struct workqueue_struct *intelliplug_wq;
 static struct workqueue_struct *intelliplug_boost_wq;
 
 static unsigned int __read_mostly intelli_plug_active = 1;
@@ -307,7 +306,7 @@ static void __ref intelli_plug_work_fn(struct work_struct *work)
 			pr_err("Run Stat Error: Bad value %u\n", nr_run_stat);
 			break;
 		}
-		queue_delayed_work_on(0, intelliplug_wq, &intelli_plug_work,
+		queue_delayed_work_on(0, system_power_efficient_wq, &intelli_plug_work,
 			msecs_to_jiffies(sampling_time));
 	}
 }
@@ -357,14 +356,13 @@ void __ref intelli_plug_perf_boost(bool on)
 	unsigned int cpu;
 
 	if (intelli_plug_active) {
-		flush_workqueue(intelliplug_wq);
 		if (on) {
 			for_each_possible_cpu(cpu) {
 				if (!cpu_online(cpu))
 					cpu_up(cpu);
 			}
 		} else {
-			queue_delayed_work_on(0, intelliplug_wq,
+			queue_delayed_work_on(0, system_power_efficient_wq,
 				&intelli_plug_work,
 				msecs_to_jiffies(sampling_time));
 		}
@@ -419,8 +417,6 @@ static void intelli_plug_suspend(struct early_suspend *handler)
 	if (intelli_plug_active) {
 		int cpu;
 	
-		flush_workqueue(intelliplug_wq);
-
 		mutex_lock(&intelli_plug_mutex);
 		suspended = true;
 		screen_off_limit(true);
@@ -464,7 +460,7 @@ static void __ref intelli_plug_resume(struct early_suspend *handler)
 		wakeup_boost();
 		screen_off_limit(false);
 	}
-	queue_delayed_work_on(0, intelliplug_wq, &intelli_plug_work,
+	queue_delayed_work_on(0, system_power_efficient_wq, &intelli_plug_work,
 		msecs_to_jiffies(10));
 }
 #endif
@@ -543,12 +539,10 @@ int __init intelli_plug_init(void)
 #endif
 	register_pm_notifier(&intelli_plug_pm_nb);
 
-	intelliplug_wq = alloc_workqueue("intelliplug",
-				WQ_HIGHPRI | WQ_UNBOUND, 1);
 	intelliplug_boost_wq = alloc_workqueue("iplug_boost",
 				WQ_HIGHPRI | WQ_UNBOUND, 1);
 	INIT_DELAYED_WORK(&intelli_plug_work, intelli_plug_work_fn);
-	queue_delayed_work_on(0, intelliplug_wq, &intelli_plug_work,
+	queue_delayed_work_on(0, system_power_efficient_wq, &intelli_plug_work,
 		msecs_to_jiffies(10));
 
 	intelli_plug_perf_boost_kobj
