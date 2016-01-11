@@ -1005,6 +1005,7 @@ config TOUCHSCREEN_SYNAPTICS_I2C_RMI4
 	  connected to your system.
 
 	  If unsure, say N.
+
 	  To compile this driver as a module, choose M here: the
 	  module will be called synaptics_i2c_rmi4.
 
@@ -1023,8 +1024,6 @@ config TOUCHSCREEN_PREVENT_SLEEP
 	default n
 	help
 	  This disables the sleep function of modified touchscreen drivers.
-
-endif
 
 config TOUCHSCREEN_SYNAPTICS_DSX_RMI4_DEV
 	tristate "Synaptics I2C touchscreen rmi device"
