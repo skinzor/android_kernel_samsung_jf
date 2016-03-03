@@ -3761,7 +3761,7 @@ CONFIG_NLATTR=y
 #
 # Synergy's Additions
 #
-CONFIG_ASYNC_FSYNC=y
+# CONFIG_ASYNC_FSYNC is not set
 
 CONFIG_CPU_VOLTAGE_TABLE=y
 
